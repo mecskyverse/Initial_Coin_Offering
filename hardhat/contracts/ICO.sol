@@ -1,5 +1,5 @@
-// SPDX-License-Identifier:MIT
-pragma solidity ^0.8.3;
+//SPDX-License-Identifier:MIT
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -26,4 +26,31 @@ contract cryptoDevToken is ERC20, Ownable {
         );
         _mint(msg.sender, amountWithDecimal);
     }
+
+    function claim() public {
+        uint256 balance = CryptoDevsNft.balanceOf(msg.sender);
+        require(balance > 0, "you do not own any Crypto Dev NFT");
+        uint256 amount = 0;
+        for (uint256 i = 0; i < balance; i++) {
+            uint256 tokenId = CryptoDevsNft.tokenOfOwnerByIndex(msg.sender, i);
+            if (!tokenIdsClaimed[tokenId]) {
+                amount += 1;
+                tokenIdsClaimed[tokenId] = true;
+            }
+        }
+        require(amount > 0, "You have already claimed all the tokens");
+        _mint(msg.sender, amount * tokensPerNft);
+    }
+
+    function withdraw() public onlyOwner {
+        uint256 amount = address(this).balance;
+        require(amount > 0, "Nothing to withdraw balance is empty");
+        address _owner = owner();
+        (bool sent, ) = _owner.call{value: amount}("");
+        require(sent, "Transaction failed");
+    }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }
