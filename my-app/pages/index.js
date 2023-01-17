@@ -3,13 +3,17 @@ import { BigNumber, Contract, providers, utils } from "ethers";
 import styles from '../styles/Home.module.css'
 import { useEffect, useState, useRef} from 'react'
 import  Web3Modal  from "web3modal";
-
+import {NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, TOKEN_CONTRACT_ADDRESS}  from '../constants';
 
 export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const zero = BigNumber.from(0)
-  const [tokensMinted, setTokensMinted] = useState(zero);
+  const [tokensMinted, setTokensMinted] = useState(zero)
   const [balanceOfCryptoDevTokens, setBalanceOfCryptoDevTokens] = useState(zero)
+  const [tokenAmount, setTokenAmount] = useState(zero)
+  const [loading, setLoading] = useState(false);
+  const [tokensToBeClaimed, setTokensToBeClaimed ]= useState(zero);
+
   const web3ModalRef = useRef();
 
   const getProviderOrSigner = async(needSigner = false) => {
@@ -35,6 +39,77 @@ export default function Home() {
       console.error(err)
     }
   }
+  const getBalanceOfCryptoDevTokens = async ()=> {
+    try {
+    const provider = await getProviderOrSigner();
+  
+    const contract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider);
+    const signer = await getProviderOrSigner(true);
+    const address = signer.getAddress();
+    const balance = await contract.balanceOf(address);
+    setBalanceOfCryptoDevTokens(balance);
+    
+    } catch (error) {
+      
+    }
+  }
+  const getTotalTokensMinted = async () =>{
+    try {
+      const provider = await getProviderOrSigner();
+      const contract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider);
+      const _tokensMinted = contract.totalSupply();
+      setTokensMinted(_tokensMinted);
+
+    } catch (err) {
+      console.log(err);
+    }
+  }
+//This will tell the user that how much nfts he can claim right now
+  const getTokensToBeClaimed = async() => {
+
+  }
+  const mintToken = async ()=> {
+  try {
+    const signer = await getProviderOrSigner(true);
+    const icoContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, signer );
+    console.log("token amount is " + tokenAmount)
+    const value = 0.001* tokenAmount;
+    const tx = await icoContract.mint(tokenAmount, {
+      value:utils.parseEther(value.toString()),
+    })
+    setLoading(true)
+    await tx.wait();
+    setLoading(false)
+
+    window.alert("successfully minted Crypto Dev Token")
+    await getBalanceOfCryptoDevTokens();
+    await getTotalTokensMinted();
+  } catch (err) {
+    console.error(err);
+  }
+  }
+  
+  const renderButton = () =>{
+    if(loading){
+      return (
+      <div>
+          <button className={styles.button}>LOADING...</button>
+      </div>
+      )
+    }
+    if(tokensToBeClaimed){
+
+    }
+    return(
+      <div style={{display:'flex-col'}}>
+      <div>
+        <input type="number" placeholder='Amount Of Tokens' onChange={(e)=>setTokenAmount(BigNumber.from(e.target.value))}/>
+        <button className={styles.button} disabled = {!(tokenAmount>0)} onClick={mintToken}>Mint Token</button>
+      </div>
+
+    </div>
+    )
+  }
 
 
 
@@ -46,6 +121,7 @@ export default function Home() {
           disableInjectedProvider:false
         })
         connectWallet();
+        getBalanceOfCryptoDevTokens();
       }
   }, [])
   
