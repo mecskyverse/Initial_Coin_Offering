@@ -57,7 +57,7 @@ export default function Home() {
     try {
       const provider = await getProviderOrSigner();
       const contract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider);
-      const _tokensMinted = contract.totalSupply();
+      const _tokensMinted = await contract.totalSupply();
       setTokensMinted(_tokensMinted);
 
     } catch (err) {
@@ -66,7 +66,27 @@ export default function Home() {
   }
 //This will tell the user that how much nfts he can claim right now
   const getTokensToBeClaimed = async() => {
-
+    const provider = await getProviderOrSigner();
+    const contract = new Contract(NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI, provider);
+    const tokenContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider)
+    const signer = await getProviderOrSigner(true);
+    const sender = await signer.getAddress(); 
+    const balance =await contract.balanceOf(sender);
+    let amount = 0;
+    if(balance === 0){
+      setTokensToBeClaimed(zero);
+    }
+    else{
+      
+      for(let i = 0;i<balance;i++){
+          const tokenId = await contract.tokenOfOwnerByIndex(sender, i);
+          const claimed = await tokenContract.tokenIdsClaimed(tokenId);
+          if(!claimed) amount++;
+      }
+      setTokensToBeClaimed(BigNumber.from(amount));
+    }
+    console.log("amount "+ amount);
+   
   }
   const mintToken = async ()=> {
   try {
@@ -84,6 +104,8 @@ export default function Home() {
     window.alert("successfully minted Crypto Dev Token")
     await getBalanceOfCryptoDevTokens();
     await getTotalTokensMinted();
+    await getTokensToBeClaimed();
+    
   } catch (err) {
     console.error(err);
   }
@@ -98,7 +120,14 @@ export default function Home() {
       )
     }
     if(tokensToBeClaimed){
+      return(
+        <div>
+          <div className={styles.description}>
+            {tokensToBeClaimed * 10} Tokens can be claimed
 
+          </div>
+        </div>
+      )
     }
     return(
       <div style={{display:'flex-col'}}>
@@ -112,7 +141,6 @@ export default function Home() {
   }
 
 
-
   useEffect(()=> {
     if(!walletConnected){
         web3ModalRef.current = new Web3Modal ({
@@ -122,6 +150,9 @@ export default function Home() {
         })
         connectWallet();
         getBalanceOfCryptoDevTokens();
+        getTotalTokensMinted();
+        getTokensToBeClaimed();
+        
       }
   }, [])
   
