@@ -137,7 +137,7 @@ export default function Home() {
       </div>
       )
     }
-    if(tokensToBeClaimed == zero){
+    if(!tokensToBeClaimed.eq(zero)){
       return(
         <div>
           <div className={styles.description}>
