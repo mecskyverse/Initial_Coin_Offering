@@ -71,7 +71,7 @@ export default function Home() {
     const tokenContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider)
     const signer = await getProviderOrSigner(true);
     const sender = await signer.getAddress(); 
-    const balance =await contract.balanceOf(sender);
+    const balance =await tokenContract.balanceOf(sender);
     let amount = 0;
     if(balance === 0){
       setTokensToBeClaimed(zero);
@@ -85,10 +85,28 @@ export default function Home() {
       }
       setTokensToBeClaimed(BigNumber.from(amount));
     }
-    console.log("amount "+ amount);
+    console.log("amount "+ balance);
    
   }
-  const mintToken = async ()=> {
+  const claimCryptoDevTokens = async () =>{
+    try {
+      const signer = await getProviderOrSigner(true);
+      const tokenContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, signer);
+      const tx = await tokenContract.claim();
+      setLoading(true);
+      await tx.wait();
+      setLoading(false);
+      
+      window.alert("successfully claimed Crypto dev token");
+      await getBalanceOfCryptoDevTokens();
+      await getTotalTokensMinted();
+      await getTokensToBeClaimed();
+    } catch (err) {
+      console.log(err);
+    }
+
+  }
+  const mintToken = async ()=> { 
   try {
     const signer = await getProviderOrSigner(true);
     const icoContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, signer );
@@ -119,21 +137,22 @@ export default function Home() {
       </div>
       )
     }
-    if(tokensToBeClaimed){
+    if(tokensToBeClaimed == zero){
       return(
         <div>
           <div className={styles.description}>
-            {tokensToBeClaimed * 10} Tokens can be claimed
+            {tokensToBeClaimed * 10} Tokens can be claimed!
 
           </div>
+          <button className={styles.button} onClick = {claimCryptoDevTokens}>Claim</button>
         </div>
       )
     }
     return(
       <div style={{display:'flex-col'}}>
       <div>
-        <input type="number" placeholder='Amount Of Tokens' onChange={(e)=>setTokenAmount(BigNumber.from(e.target.value))}/>
-        <button className={styles.button} disabled = {!(tokenAmount>0)} onClick={mintToken}>Mint Token</button>
+        <input className={styles.input} type="number" placeholder='Amount Of Tokens' onChange={(e)=>setTokenAmount(BigNumber.from(e.target.value))}/>
+        <button className={styles.button} style ={{marginLeft:'10px'}} disabled = {!(tokenAmount>0)} onClick={mintToken}>Mint Token</button>
       </div>
 
     </div>
@@ -154,7 +173,7 @@ export default function Home() {
         getTokensToBeClaimed();
         
       }
-  }, [])
+  }, [walletConnected])
   
   return (
     <>
@@ -165,22 +184,27 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
+      
         <div>
           <h1 className={styles.title}>Welcome to Crypto Devs ICO</h1>
           <div className={styles.description}>This is a Decentralized token allocation dapp</div>
-        </div>
         {
           walletConnected ? (
             <div>
               <div className= {styles.description}>You have minted {utils.formatEther(balanceOfCryptoDevTokens)} tokens</div>
                 <div>Overall {utils.formatEther(tokensMinted)}/10000 tokens have been minted</div>
-                {renderButton()}
+                
             </div>
           ):
           <button onClick={connectWallet} className={styles.button}>Connect Wallet</button>
-          
         }
+        {renderButton()}
+        </div>
+        
+        <img className={styles.image} src='./0.svg' />
       </main>
+      
+      <footer className={styles.footer}>Made with &#10084; by Crypto Devs</footer>
     </>
   )
 }
