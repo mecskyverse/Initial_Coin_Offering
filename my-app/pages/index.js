@@ -66,12 +66,13 @@ export default function Home() {
   }
 //This will tell the user that how much nfts he can claim right now
   const getTokensToBeClaimed = async() => {
+   try {
     const provider = await getProviderOrSigner();
     const contract = new Contract(NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI, provider);
     const tokenContract = new Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_CONTRACT_ABI, provider)
     const signer = await getProviderOrSigner(true);
     const sender = await signer.getAddress(); 
-    const balance =await tokenContract.balanceOf(sender);
+    const balance =await contract.balanceOf(sender);
     let amount = 0;
     if(balance === 0){
       setTokensToBeClaimed(zero);
@@ -86,6 +87,9 @@ export default function Home() {
       setTokensToBeClaimed(BigNumber.from(amount));
     }
     console.log("amount "+ balance);
+   } catch (err) {
+    console.error(err)
+   }
    
   }
   const claimCryptoDevTokens = async () =>{
