@@ -197,12 +197,13 @@ export default function Home() {
             <div>
               <div className= {styles.description}>You have minted {utils.formatEther(balanceOfCryptoDevTokens)} tokens</div>
                 <div>Overall {utils.formatEther(tokensMinted)}/10000 tokens have been minted</div>
-                
+                {renderButton()}    
             </div>
+
           ):
           <button onClick={connectWallet} className={styles.button}>Connect Wallet</button>
         }
-        {renderButton()}
+        
         </div>
         
         <img className={styles.image} src='./0.svg' />
